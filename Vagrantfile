@@ -28,6 +28,7 @@ $public_network_type = if ENV['FUEL_ADMIN_NET_GW'].to_s.strip.length == 0
 Vagrant.configure("2") do |config|
   config.vm.define :fuel_master, primary: true do |fuel|
     fuel.vm.box = "centos/7"
+    fuel.vm.box_version = "1610.01"
     fuel.vm.hostname = "fuel"
     if ENV['VIRTUAL'] == 'true'
       fuel.vm.network :private_network,
@@ -111,10 +112,11 @@ Vagrant.configure("2") do |config|
           :type => "bridge"
       end
       node.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '200G', :type => 'qcow2'
+        domain.storage :file, :size => '200G', :type => 'raw'
         domain.memory = 6144
         domain.cpus = 2
         domain.boot 'network'
+        domain.mgmt_attach = false
       end
     end
   end

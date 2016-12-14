@@ -170,6 +170,17 @@ echo "Download mos packages"
 fuel-mirror create --group mos --pattern=ubuntu
 MIRROR_DIRECTORY=$(echo "${MOS_REPO}" | cut -d'/' -f4-)
 rm -rf /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/
-ln -s /var/www/nailgun/mirrors/${MIRROR_DIRECTORY} /var/www/nailgun/mitaka-9.0/ubuntu/x86_64
-fuel-bootstrap build --activate
+mv /var/www/nailgun/mirrors/${MIRROR_DIRECTORY} /var/www/nailgun/mitaka-9.0/ubuntu/x86_64
+mkdir -p /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images
+touch /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images/initrd.gz
+touch /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images/linux
+
+# 9.1 Update
+yum install -y perl-Data-Dumper
+yum-config-manager -v --disable CentOS*
+yum clean all
+yum install -y python-cudet
+update-prepare prepare master
+update-prepare update master
+#fuel-bootstrap build --activate
 sleep 5
