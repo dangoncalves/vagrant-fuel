@@ -36,8 +36,7 @@ Vagrant.configure("2") do |config|
         libvirt__network_name: "fuel_pxe",
         libvirt__dhcp_enabled: false,
         libvirt__forward_mode: "nat",
-        libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW'],
-        model_type: "e1000"
+        libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW']
     else
       fuel.vm.network :public_network,
         :dev => ENV['HOST_PXE_INTERFACE'],
@@ -62,32 +61,27 @@ Vagrant.configure("2") do |config|
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "nat",
           libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW'],
-          model_type: "e1000",
           auto_config: false
         node.vm.network :private_network,
           libvirt__network_name: "fuel_mgmt",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          model_type: "e1000",
           auto_config: false
         node.vm.network :private_network,
           libvirt__network_name: "fuel_storage",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          model_type: "e1000",
           auto_config: false
         node.vm.network :private_network,
           libvirt__network_name: "fuel_private",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          model_type: "e1000",
           auto_config: false
         node.vm.network :private_network,
           libvirt__network_name: "fuel_public",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "nat",
           libvirt__host_ip: ENV['PUBLIC_NET_GW'],
-          model_type: "e1000",
           auto_config: false
       else
         node.vm.network :public_network,
@@ -116,6 +110,7 @@ Vagrant.configure("2") do |config|
         domain.memory = 6144
         domain.cpus = 2
         domain.boot 'network'
+        domain.nic_model_type = "e1000"
         domain.mgmt_attach = false
       end
     end
