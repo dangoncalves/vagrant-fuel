@@ -1,6 +1,5 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-Vagrant.require_plugin "vagrant-libvirt"
 
 $configuration_hash = {
   'HOST_PXE_INTERFACE' => ENV['HOST_PXE_INTERFACE'],
