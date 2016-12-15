@@ -7,6 +7,7 @@ cat >/etc/fuel/astute.yaml <<EOF
   "dhcp_pool_end": "${DHCP_END}"
   "dhcp_pool_start": "${DHCP_START}"
   "interface": "eth1"
+  "mac": "${ADMIN_MAC}"
   "ipaddress": "${FUEL_ADMIN_IP}"
   "netmask": "${FUEL_ADMIN_MASK}"
   "ssh_network": "0.0.0.0/0"
@@ -157,6 +158,7 @@ until wait_for_config || [ $WAIT_TIME -eq 0 ]; do
    WAIT_TIME=$(( WAIT_TIME - 1 ))
 done
 echo "Inject configuration"
+ADMIN_MAC=$(cat /sys/class/net/eth1/address)
 mos9
 kill_wait_for_config
 sleep 5
