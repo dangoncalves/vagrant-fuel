@@ -35,7 +35,8 @@ Vagrant.configure("2") do |config|
         libvirt__network_name: "fuel_pxe",
         libvirt__dhcp_enabled: false,
         libvirt__forward_mode: "nat",
-        libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW']
+        libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW'],
+        autostart: true
     else
       fuel.vm.network :public_network,
         :dev => ENV['HOST_PXE_INTERFACE'],
@@ -47,6 +48,7 @@ Vagrant.configure("2") do |config|
       domain.memory = 2048
       domain.cpus = 2
       domain.management_network_mode = "#{$public_network_type}"
+      domain.management_network_autostart = true
       domain.storage :file, :size => '50G', :type => 'raw'
     end
     fuel.vm.provision "shell", path: "files/install_fuel.sh", env: $configuration_hash
@@ -60,28 +62,33 @@ Vagrant.configure("2") do |config|
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "nat",
           libvirt__host_ip: ENV['FUEL_ADMIN_NET_GW'],
-          auto_config: false
+          auto_config: false,
+          autostart: true
         node.vm.network :private_network,
           libvirt__network_name: "fuel_mgmt",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          auto_config: false
+          auto_config: false,
+          autostart: true
         node.vm.network :private_network,
           libvirt__network_name: "fuel_storage",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          auto_config: false
+          auto_config: false,
+          autostart: true
         node.vm.network :private_network,
           libvirt__network_name: "fuel_private",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "veryisolated",
-          auto_config: false
+          auto_config: false,
+          autostart: true
         node.vm.network :private_network,
           libvirt__network_name: "fuel_public",
           libvirt__dhcp_enabled: false,
           libvirt__forward_mode: "nat",
           libvirt__host_ip: ENV['PUBLIC_NET_GW'],
-          auto_config: false
+          auto_config: false,
+          autostart: true
       else
         node.vm.network :public_network,
           :dev => ENV['HOST_PXE_INTERFACE'],
