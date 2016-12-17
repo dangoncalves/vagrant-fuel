@@ -12,6 +12,7 @@ $configuration_hash = {
   'DHCP_END'           => ENV['DHCP_END'],
   'DNS_SERVER'         => ENV['DNS_SERVER'],
   'NTP_1'              => ENV['NTP_1'],
+  'FUEL_VERSION'       => ENV['FUEL_VERSION'],
   'RELEASE_RPM'        => ENV['RELEASE_RPM'],
   'MOS_REPO'           => ENV['MOS_REPO']
 }
@@ -51,6 +52,9 @@ Vagrant.configure("2") do |config|
       domain.management_network_autostart = true
       domain.storage :file, :size => '50G', :type => 'raw'
     end
+    fuel.vm.provision "file",
+      source: "files/fuel_cobbler_9.1.patch",
+      destination: "fuel_cobbler_9.1.patch"
     fuel.vm.provision "shell", path: "files/install_fuel.sh", env: $configuration_hash
   end
 

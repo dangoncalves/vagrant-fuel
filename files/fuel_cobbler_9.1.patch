@@ -1,0 +1,145 @@
+From 32bec8708c08b9d695ed143e49403b0c4a2d43c8 Mon Sep 17 00:00:00 2001
+From: Vladimir Kozhukalov <vkozhukalov@mirantis.com>
+Date: Tue, 26 Jul 2016 13:49:47 +0300
+Subject: [PATCH] Reconfigure resolv.conf once cobbler is installed
+
+Once cobbler is ready and working
+we need to re-configure /etc/resolv.conf so it points to
+cobbler.
+
+Change-Id: I43cf1607dcfcd5e19daeb30512a0b18ee8d6a7be
+Closes-Bug: #1606181
+(cherry picked from commit 524bb61b65f2582bad636578379427250e245237)
+---
+
+diff --git a/deployment/puppet/cobbler/manifests/init.pp b/deployment/puppet/cobbler/manifests/init.pp
+index 78e7e08..f409a85 100644
+--- a/deployment/puppet/cobbler/manifests/init.pp
++++ b/deployment/puppet/cobbler/manifests/init.pp
+@@ -46,7 +46,7 @@
+   $domain_name        = 'local',
+   $name_server        = $ipaddress,
+   $next_server        = $ipaddress,
+-  $dns_upstream       = '8.8.8.8',
++  $dns_upstream       = ['8.8.8.8'],
+   $dns_domain         = 'domain.tld',
+   $dns_search         = 'domain.tld',
+
+diff --git a/deployment/puppet/cobbler/manifests/server.pp b/deployment/puppet/cobbler/manifests/server.pp
+index cee6096..f98c23d 100644
+--- a/deployment/puppet/cobbler/manifests/server.pp
++++ b/deployment/puppet/cobbler/manifests/server.pp
+@@ -29,7 +29,7 @@
+   $domain_name    = 'local',
+   $dns_search     = 'local',
+   $dns_domain     = 'local',
+-  $dns_upstream   = '8.8.8.8',
++  $dns_upstream   = ['8.8.8.8'],
+   $dhcp_gateway   = unset,
+   $dhcp_lease_max = '1800',
+   $lease_time     = '120m',
+diff --git a/deployment/puppet/cobbler/templates/dnsmasq.template.erb b/deployment/puppet/cobbler/templates/dnsmasq.template.erb
+index 219b5a2..c88ad57 100644
+--- a/deployment/puppet/cobbler/templates/dnsmasq.template.erb
++++ b/deployment/puppet/cobbler/templates/dnsmasq.template.erb
+@@ -13,7 +13,7 @@
+ server=/<%= @domain_name %>/
+ <% end %>
+ server=/<%= @dns_domain %>/
+-<%- @dns_upstream.split(',').each do |dns| -%>
++<%- @dns_upstream.each do |dns| -%>
+ server=/<%= @dns_domain %>/<%= dns %>
+ <%- end -%>
+ resolv-file=/etc/dnsmasq.upstream
+diff --git a/deployment/puppet/cobbler/templates/dnsmasq.upstream.erb b/deployment/puppet/cobbler/templates/dnsmasq.upstream.erb
+index 2097292..a36c382 100644
+--- a/deployment/puppet/cobbler/templates/dnsmasq.upstream.erb
++++ b/deployment/puppet/cobbler/templates/dnsmasq.upstream.erb
+@@ -1,5 +1,5 @@
+ domain <%= @dns_domain %>
+ search <%= @dns_search %>
+-<%- @dns_upstream.split(',').each do |dns| -%>
++<%- @dns_upstream.each do |dns| -%>
+ nameserver <%= dns %>
+ <%- end -%>
+diff --git a/deployment/puppet/fuel/examples/cobbler.pp b/deployment/puppet/fuel/examples/cobbler.pp
+index 605019a..2fdd224 100644
+--- a/deployment/puppet/fuel/examples/cobbler.pp
++++ b/deployment/puppet/fuel/examples/cobbler.pp
+@@ -10,6 +10,10 @@
+ $bootstrap_meta              = pick(loadyaml("${bootstrap_path}/metadata.yaml"), {})
+ $bootstrap_ethdevice_timeout = pick($bootstrap_settings['ethdevice_timeout'], '120')
+ $dhcp_gw                     = $::fuel_settings['ADMIN_NETWORK']['dhcp_gateway']
++$dns_domain                  = $::fuel_settings['DNS_DOMAIN']
++$dns_search                  = $::fuel_settings['DNS_SEARCH']
++$dns_upstream                = split($::fuel_settings['DNS_UPSTREAM'], ',')
++$cobbler_host                = $::fuel_settings['ADMIN_NETWORK']['ipaddress']
+
+ if $dhcp_gw {
+   $dhcp_gateway = $dhcp_gw
+@@ -28,12 +32,19 @@
+   next_server                 => $::fuel_settings['ADMIN_NETWORK']['ipaddress'],
+   mco_user                    => $::fuel_settings['mcollective']['user'],
+   mco_pass                    => $::fuel_settings['mcollective']['password'],
+-  dns_upstream                => $::fuel_settings['DNS_UPSTREAM'],
+-  dns_domain                  => $::fuel_settings['DNS_DOMAIN'],
+-  dns_search                  => $::fuel_settings['DNS_SEARCH'],
++  dns_upstream                => $dns_upstream,
++  dns_domain                  => $dns_domain,
++  dns_search                  => $dns_search,
+   dhcp_ipaddress              => $::fuel_settings['ADMIN_NETWORK']['ipaddress'],
+   nailgun_api_url             => $nailgun_api_url,
+   bootstrap_ethdevice_timeout => $bootstrap_ethdevice_timeout,
++} ->
++
++file { '/etc/resolv.conf':
++  content => template('fuel/resolv.conf.erb'),
++  owner   => 'root',
++  group   => 'root',
++  mode    => '0644',
+ }
+
+ fuel::systemd {['httpd', 'cobblerd', 'dnsmasq', 'xinetd']:
+diff --git a/deployment/puppet/fuel/examples/host.pp b/deployment/puppet/fuel/examples/host.pp
+index c947a00..ac54b4a 100644
+--- a/deployment/puppet/fuel/examples/host.pp
++++ b/deployment/puppet/fuel/examples/host.pp
+@@ -8,11 +8,6 @@
+ $ntp_servers = delete(delete_undef_values([$::fuel_settings['NTP1'],
+   $::fuel_settings['NTP2'], $::fuel_settings['NTP3']]), '')
+
+-# Vars for File['/etc/resolv.conf']
+-$dns_domain = $::fuel_settings['DNS_DOMAIN']
+-$dns_search = $::fuel_settings['DNS_SEARCH']
+-$dns_upstream = split($::fuel_settings['DNS_UPSTREAM'], ',')
+-
+ # Vars for File['/etc/dhcp/dhclient.conf']
+ $cobbler_host = $::fuel_settings['ADMIN_NETWORK']['ipaddress']
+
+@@ -66,13 +61,6 @@
+   owner   => 'root',
+   group   => 'root',
+   mode    => '0755',
+-}
+-
+-file { '/etc/resolv.conf':
+-  content => template('fuel/resolv.conf.erb'),
+-  owner   => 'root',
+-  group   => 'root',
+-  mode    => '0644',
+ }
+
+ augeas { 'Cleanup orphaned dns settings from ifcfg-e* files':
+diff --git a/deployment/puppet/fuel/manifests/params.pp b/deployment/puppet/fuel/manifests/params.pp
+index 55f8d5d..5627711 100644
+--- a/deployment/puppet/fuel/manifests/params.pp
++++ b/deployment/puppet/fuel/manifests/params.pp
+@@ -61,7 +61,7 @@
+   ]
+
+   $ks_system_timezone            = 'Etc/UTC'
+-  $dns_upstream                  = '8.8.8.8'
++  $dns_upstream                  = ['8.8.8.8']
+   $dns_domain                    = 'domain.tld'
+   $dns_search                    = 'domain.tld'
+   $dhcp_ipaddress                = '127.0.0.1'

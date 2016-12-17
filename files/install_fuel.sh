@@ -58,7 +58,7 @@ cat >/etc/fuel/astute.yaml <<EOF
     "suite": "mos9.0-holdback"
     "type": "deb"
     "uri": "http://mirror.fuel-infra.org/mos-repos/ubuntu/9.0"
-  "skip_default_img_build": !!bool "true"
+  "skip_default_img_build": !!bool "false"
 "DNS_DOMAIN": "domain.tld"
 "DNS_SEARCH": "domain.tld"
 "DNS_UPSTREAM": "${DNS_SERVER}"
@@ -124,21 +124,16 @@ function gen_password {
 }
 
 if [[ ! -z "${FUEL_ADMIN_NET_GW// }" ]]; then
-  #ip route add default via ${FUEL_ADMIN_NET_GW}
-  #ip r
   echo "GATEWAY=${FUEL_ADMIN_NET_GW}" > /etc/sysconfig/network
   systemctl restart network && sleep 5
   echo "nameserver ${DNS_SERVER}" > /etc/resolv.conf
 fi
 
-cat /etc/resolv.conf
 grow_disk
 echo "root:r00tme" | chpasswd
 yum install -y wget
 wget -O fuel-release.rpm ${RELEASE_RPM}
 rpm -Uvh fuel-release.rpm
-# https://bugs.launchpad.net/fuel/+bug/1606181
-sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/mos-updates.repo
 yum install -y fuel-setup
 mkdir -p /etc/fuel
 cat > /etc/fuel/bootstrap_admin_node.conf <<EOF
@@ -146,6 +141,15 @@ ADMIN_INTERFACE=eth0
 showmenu=no
 wait_for_external_config=yes
 EOF
+
+if [ "$FUEL_VERSION" = "9.1" ]; then
+  yum install -y patch fuel-library9.0
+  cp /home/vagrant/fuel_cobbler_9.1.patch /etc/puppet/modules/fuel_cobbler_9.1.patch
+  pushd /etc/puppet/modules
+  echo "Applying patch for cobbler: https://bugs.launchpad.net/fuel/+bug/1606181"
+  patch -p3 < fuel_cobbler_9.1.patch
+  popd
+fi
 
 echo "Start bootstraping admin node"
 /usr/sbin/bootstrap_admin_node.sh > bootstrap.log 2>&1 & disown
@@ -166,7 +170,6 @@ if [[ ! -z "${FUEL_ADMIN_NET_GW// }" ]]; then
   echo "nameserver ${DNS_SERVER}" > /etc/resolv.conf
 fi
 tail --pid ${BOOTSTRAP_PID} -n +1 -f bootstrap.log
-sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/mos-updates.repo
 sed -i "s|http://mirror.fuel-infra.org/mos-repos/ubuntu/\$mos_version|${MOS_REPO}|" /usr/share/fuel-mirror/ubuntu.yaml
 echo "Download mos packages"
 fuel-mirror create --group mos --pattern=ubuntu
@@ -176,13 +179,3 @@ mv /var/www/nailgun/mirrors/${MIRROR_DIRECTORY} /var/www/nailgun/mitaka-9.0/ubun
 mkdir -p /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images
 touch /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images/initrd.gz
 touch /var/www/nailgun/mitaka-9.0/ubuntu/x86_64/images/linux
-
-# 9.1 Update
-yum install -y perl-Data-Dumper
-yum-config-manager -v --disable CentOS*
-yum clean all
-yum install -y python-cudet
-update-prepare prepare master
-update-prepare update master
-#fuel-bootstrap build --activate
-sleep 5
