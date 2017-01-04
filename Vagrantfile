@@ -50,7 +50,7 @@ Vagrant.configure("2") do |config|
       domain.cpus = 2
       domain.management_network_mode = "#{$public_network_type}"
       domain.management_network_autostart = true
-      domain.storage :file, :size => '50G', :type => 'raw'
+      domain.storage :file, :size => '50G', :type => 'raw', :cache => 'none'
     end
     fuel.vm.provision "file",
       source: "files/fuel_cobbler_9.1.patch",
@@ -116,7 +116,7 @@ Vagrant.configure("2") do |config|
           :type => "bridge"
       end
       node.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '200G', :type => 'raw'
+        domain.storage :file, :size => '200G', :type => 'raw', :cache => 'none'
         domain.memory = 6144
         domain.cpus = 2
         domain.boot 'network'
