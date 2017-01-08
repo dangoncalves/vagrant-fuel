@@ -24,11 +24,16 @@ $public_network_type = if ENV['FUEL_ADMIN_NET_GW'].to_s.strip.length == 0
                        else
                          "none"
                        end
+$box_version = if ENV['FUEL_VERSION'] == '10.0'
+                 '1611.01'
+               else
+                 '1610.01'
+               end
 
 Vagrant.configure("2") do |config|
   config.vm.define :fuel_master, primary: true do |fuel|
     fuel.vm.box = "centos/7"
-    fuel.vm.box_version = "1610.01"
+    fuel.vm.box_version = $box_version
     fuel.vm.hostname = "fuel"
     if ENV['VIRTUAL'] == 'true'
       fuel.vm.network :private_network,
@@ -51,11 +56,16 @@ Vagrant.configure("2") do |config|
       domain.management_network_mode = "#{$public_network_type}"
       domain.management_network_autostart = true
       domain.storage :file, :size => '50G', :type => 'raw', :cache => 'none'
+      domain.storage_pool_name = ENV['STORAGE_POOL']
     end
     fuel.vm.provision "file",
       source: "files/fuel_cobbler_9.1.patch",
       destination: "fuel_cobbler_9.1.patch"
+    fuel.vm.provision "file",
+      source: "files/fuel10repos.json",
+      destination: "fuel10repos.json"
     fuel.vm.provision "shell", path: "files/install_fuel.sh", env: $configuration_hash
+    fuel.vm.post_up_message = "Fuel Web available on: https://#{ENV['FUEL_ADMIN_IP']}:8443"
   end
 
   (1..ENV['NODES_NUMBER'].to_i).each do |i|
@@ -122,6 +132,7 @@ Vagrant.configure("2") do |config|
         domain.boot 'network'
         domain.nic_model_type = "e1000"
         domain.mgmt_attach = false
+        domain.storage_pool_name = ENV['STORAGE_POOL']
       end
     end
   end

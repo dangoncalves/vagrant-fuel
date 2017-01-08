@@ -1,4 +1,4 @@
-## Deploy Fuel 9 with Vagrant libvirt provider
+## Deploy Fuel with Vagrant libvirt provider
 ### Prepare environment (Ubuntu 16.04)
 
 * Install dependencies
@@ -33,7 +33,7 @@ Remember to source `env.conf` file before executing any vagrant VMs related comm
     
 ### Deployment
 
-[Centos 7.2 box](https://atlas.hashicorp.com/centos/boxes/7/versions/1610.01) is used as base for Fuel Master node and on the top of this Fuel packages are installed. Slave nodes will be booted from network.
+[Centos 7 box](https://atlas.hashicorp.com/centos/boxes/7) is used as base for Fuel Master node and on the top of this Fuel packages are installed. Slave nodes will be booted from network.
 There are two scenarios of deployment depend on value of `VIRTUAL` env variable:
 
 1. If set to 'true' it is assumed that all nodes in cluster will be local VMs and for communication between them libvirt networks will be used.

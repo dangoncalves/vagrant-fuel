@@ -1,0 +1,66 @@
+[
+  {
+    "name": "ubuntu", 
+    "section": "main universe multiverse", 
+    "uri": "http://archive.ubuntu.com/ubuntu/", 
+    "priority": null, 
+    "suite": "xenial", 
+    "type": "deb"
+  }, 
+  {
+    "name": "ubuntu-updates", 
+    "section": "main universe multiverse", 
+    "uri": "http://archive.ubuntu.com/ubuntu/", 
+    "priority": null, 
+    "suite": "xenial-updates", 
+    "type": "deb"
+  }, 
+  {
+    "name": "ubuntu-security", 
+    "section": "main universe multiverse", 
+    "uri": "http://archive.ubuntu.com/ubuntu/", 
+    "priority": null, 
+    "suite": "xenial-security", 
+    "type": "deb"
+  }, 
+  {
+    "name": "mos", 
+    "section": "main restricted", 
+    "uri": "http://mirror.fuel-infra.org/mos-repos/ubuntu/{cluster.release.environment_version}/", 
+    "priority": 1050, 
+    "suite": "mos10.0", 
+    "type": "deb"
+  }, 
+  {
+    "name": "mos-updates", 
+    "section": "main restricted", 
+    "uri": "http://mirror.fuel-infra.org/mos-repos/ubuntu/{cluster.release.environment_version}/", 
+    "priority": 1050, 
+    "suite": "mos10.0-updates", 
+    "type": "deb"
+  }, 
+  {
+    "name": "mos-security", 
+    "section": "main restricted", 
+    "uri": "http://mirror.fuel-infra.org/mos-repos/ubuntu/{cluster.release.environment_version}/", 
+    "priority": 1050, 
+    "suite": "mos10.0-security", 
+    "type": "deb"
+  }, 
+  {
+    "name": "mos-holdback", 
+    "section": "main restricted", 
+    "uri": "http://mirror.fuel-infra.org/mos-repos/ubuntu/{cluster.release.environment_version}/", 
+    "priority": 1100, 
+    "suite": "mos10.0-holdback", 
+    "type": "deb"
+  }, 
+  {
+    "name": "Auxiliary", 
+    "section": "main restricted", 
+    "uri": "http://{settings.MASTER_IP}:8080/{cluster.release.version}/ubuntu/auxiliary", 
+    "priority": 1150, 
+    "suite": "auxiliary", 
+    "type": "deb"
+  }
+]
